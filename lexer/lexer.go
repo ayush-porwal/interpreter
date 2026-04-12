@@ -23,6 +23,16 @@ func (l *Lexer) readChar() {
 }
 
 /*
+Give the next character without advancing the position in the input string
+*/
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	}
+	return l.input[l.readPosition]
+}
+
+/*
 Create a new Lexer instance with the given input string
 */
 func New(input string) *Lexer {
@@ -90,8 +100,36 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
 	switch l.ch {
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
+	case '-':
+		tok = newToken(token.MINUS, l.ch)
+	case '*':
+		tok = newToken(token.MULTIPLY, l.ch)
+	case '/':
+		tok = newToken(token.DIVIDE, l.ch)
+	case '!':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.NOT_EQUALS, Literal: literal}
+		} else {
+			tok = newToken(token.NEGATE, l.ch)
+		}
+	case '<':
+		tok = newToken(token.LESS_THAN, l.ch)
+	case '>':
+		tok = newToken(token.GREATER_THAN, l.ch)
 	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.EQUALS, Literal: literal}
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
 	case '(':
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
@@ -104,8 +142,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.COMMA, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
-	case '+':
-		tok = newToken(token.PLUS, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
